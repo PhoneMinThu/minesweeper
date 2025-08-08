@@ -1,0 +1,9 @@
+# Configure global Clippy behavior, keep strict defaults and allow local overrides via #[allow(...)].
+# Add rule-specific allows here only if they cannot be scoped locally.
+
+# Example (commented out):
+# allow = [
+#   "module_name_repetitions",
+#   "missing_errors_doc",
+# ]
+
