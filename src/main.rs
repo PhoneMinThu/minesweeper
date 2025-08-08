@@ -62,6 +62,7 @@ fn main() {
         let cursor = Some((app.cursor.x, app.cursor.y));
         let status = app.status;
 
+        let correct_flags = app.board.count_correct_flags();
         if let Err(e) = terminal.draw(|f| {
             draw_app(
                 f,
@@ -74,6 +75,7 @@ fn main() {
                 |x, y| app.board.is_mine(x, y),
                 cursor,
                 status,
+                correct_flags,
             );
         }) {
             eprintln!("UI draw error: {e}");

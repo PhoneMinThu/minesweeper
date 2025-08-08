@@ -24,6 +24,7 @@ pub fn draw_app<FGet, FIsMine>(
     mut is_mine: FIsMine,
     cursor: Option<(usize, usize)>,
     status: Status,
+    correct_flags: usize,
 ) where
     FGet: FnMut(usize, usize) -> CellState,
     FIsMine: FnMut(usize, usize) -> bool,
@@ -46,8 +47,20 @@ pub fn draw_app<FGet, FIsMine>(
 
     // Overlay for game end
     match status {
-        Status::Win => draw_overlay(f, area, "You win! Press R to restart or D to change difficulty"),
-        Status::Lose => draw_overlay(f, area, "Boom! You lost. Press R to restart or D to change difficulty"),
+        Status::Win => {
+            let message = format!(
+                "You win! Correctly flagged: {}/{} mines\n\nPress R to restart or D to change difficulty",
+                correct_flags, mines_total
+            );
+            draw_overlay(f, area, &message)
+        }
+        Status::Lose => {
+            let message = format!(
+                "Boom! You lost. Correctly flagged: {}/{} mines\n\nPress R to restart or D to change difficulty",
+                correct_flags, mines_total
+            );
+            draw_overlay(f, area, &message)
+        }
         Status::Playing => {}
     }
 }
@@ -114,11 +127,19 @@ pub fn draw_board<FGet, FIsMine>(
         for x in 0..width {
             let cell = cell_at(x, y);
             // If game over/won, reveal mines regardless of cell state
-            let (symbol, style) = if matches!(status, Status::Win | Status::Lose)
-                && matches!(cell, CellState::Hidden)
-                && is_mine(x, y)
-            {
-                ("*".to_string(), Style::default().fg(Color::Red).add_modifier(Modifier::BOLD))
+            let (symbol, style) = if matches!(status, Status::Win | Status::Lose) {
+                if matches!(cell, CellState::Hidden) && is_mine(x, y) {
+                    // Show unflagged mines as red asterisks
+                    ("*".to_string(), Style::default().fg(Color::Red).add_modifier(Modifier::BOLD))
+                } else if matches!(cell, CellState::Flagged) && is_mine(x, y) {
+                    // Show correctly flagged mines as green check marks
+                    ("✓".to_string(), Style::default().fg(Color::Green).add_modifier(Modifier::BOLD))
+                } else if matches!(cell, CellState::Flagged) && !is_mine(x, y) {
+                    // Keep incorrectly flagged cells as red flags (or could use ✗)
+                    ("⚑".to_string(), Style::default().fg(Color::Red))
+                } else {
+                    cell_symbol_and_style(cell)
+                }
             } else {
                 cell_symbol_and_style(cell)
             };

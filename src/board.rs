@@ -205,6 +205,20 @@ impl Board {
         self.minefield[self.idx(x, y)]
     }
 
+    /// Count the number of correctly flagged mines.
+    pub fn count_correct_flags(&self) -> usize {
+        let mut count = 0;
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let i = self.idx(x, y);
+                if matches!(self.state[i], CellState::Flagged) && self.minefield[i] {
+                    count += 1;
+                }
+            }
+        }
+        count
+    }
+
 }
 
 #[cfg(test)]
