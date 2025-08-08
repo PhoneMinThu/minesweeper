@@ -34,6 +34,26 @@ impl Board {
         }
     }
 
+    /// Board width in cells.
+    pub const fn width(&self) -> usize { self.width }
+    /// Board height in cells.
+    pub const fn height(&self) -> usize { self.height }
+    /// Total number of mines.
+    pub const fn mines(&self) -> usize { self.mines }
+
+    /// Return the current state of a cell at (x, y).
+    pub fn cell_at(&self, x: usize, y: usize) -> CellState {
+        self.state[self.idx(x, y)]
+    }
+
+    /// Count how many flags are currently placed on the board.
+    pub fn flags_count(&self) -> usize {
+        self.state
+            .iter()
+            .filter(|c| matches!(c, CellState::Flagged))
+            .count()
+    }
+
     #[inline]
     fn idx(&self, x: usize, y: usize) -> usize {
         y * self.width + x
