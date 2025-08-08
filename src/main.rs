@@ -59,7 +59,7 @@ fn main() {
         let width = app.board.width();
         let height = app.board.height();
         let mines_total = app.board.mines();
-        let flags = app.board.flags_count();
+        let flags = app.flags_placed;
         let cursor = Some((app.cursor.x, app.cursor.y));
         let status = app.status;
 

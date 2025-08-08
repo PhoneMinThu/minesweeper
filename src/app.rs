@@ -58,6 +58,7 @@ pub struct AppState {
     pub difficulty: Difficulty,
     pub first_click_done: bool,
     pub start_time: Option<Instant>,
+    pub flags_placed: usize,
     pub status: Status,
 }
 
@@ -71,6 +72,7 @@ impl AppState {
             difficulty,
             first_click_done: false,
             start_time: None,
+            flags_placed: 0,
             status: Status::Playing,
         }
     }
@@ -82,6 +84,7 @@ impl AppState {
         self.cursor = Cursor::new(0, 0);
         self.first_click_done = false;
         self.start_time = None;
+        self.flags_placed = 0;
         self.status = Status::Playing;
     }
 
@@ -110,6 +113,18 @@ impl AppState {
             Action::MoveDown => self.try_move(0, 1),
             Action::Reveal => self.reveal_at_cursor(),
             Action::ToggleFlag => {
+                // Adjust flags_placed based on current cell state before toggle
+                match self.board.cell_at(self.cursor.x, self.cursor.y) {
+                    crate::board::CellState::Hidden => {
+                        // Will become Flagged
+                        self.flags_placed = self.flags_placed.saturating_add(1);
+                    }
+                    crate::board::CellState::Flagged => {
+                        // Will become Hidden
+                        self.flags_placed = self.flags_placed.saturating_sub(1);
+                    }
+                    crate::board::CellState::Revealed(_) => {}
+                }
                 self.board.toggle_flag(self.cursor.x, self.cursor.y);
                 Command::Redraw
             }
