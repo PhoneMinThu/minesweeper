@@ -3,6 +3,14 @@ name = "minesweeper"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+name = "minesweeper"
+path = "src/lib.rs"
+
+[[bin]]
+name = "minesweeper"
+path = "src/main.rs"
+
 [dependencies]
 anyhow = "1.0.98"
 crossterm = "0.29.0"

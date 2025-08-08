@@ -2,7 +2,7 @@ use rand::rng;
 use rand::seq::SliceRandom;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum CellState {
+pjb enum CellState {
     Hidden,
     Revealed(u8),
     Flagged,
@@ -336,6 +336,60 @@ mod tests {
         // Chord should now attempt to open (0,0) and hit a mine
         let safe = b.chord(1, 1);
         assert!(!safe);
+    }
+
+    // New edge-case tests
+    #[test]
+    fn chord_noop_when_flag_count_does_not_match() {
+        let mut b = board_with(3, 3, 1);
+        // Place a mine at (2,2), reveal center shows 1
+        b.mines_placed = true;
+        b.minefield[b.idx(2, 2)] = true;
+        assert!(b.reveal(1, 1));
+        assert!(matches!(b.state[b.idx(1, 1)], CellState::Revealed(1)));
+        // Do NOT place any flags, chording should be a no-op
+        let before_hidden: usize = b
+            .neighbors(1, 1)
+            .filter(|&(nx, ny)| matches!(b.state[b.idx(nx, ny)], CellState::Hidden))
+            .count();
+        let safe = b.chord(1, 1);
+        assert!(safe);
+        let after_hidden: usize = b
+            .neighbors(1, 1)
+            .filter(|&(nx, ny)| matches!(b.state[b.idx(nx, ny)], CellState::Hidden))
+            .count();
+        assert_eq!(before_hidden, after_hidden, "chord should not reveal when flags don't match");
+    }
+
+    #[test]
+    fn win_detection_after_revealing_all_non_mines() {
+        let mut b = board_with(2, 2, 1);
+        // Deterministic mine at (0,0)
+        b.mines_placed = true;
+        b.minefield[b.idx(0, 0)] = true;
+        // Reveal all safe cells
+        assert!(b.reveal(1, 0));
+        assert!(b.reveal(0, 1));
+        assert!(b.reveal(1, 1));
+        assert!(b.is_win());
+    }
+
+    #[test]
+    fn flood_fill_handles_board_edges_without_overflow() {
+        // Place a single mine far from corner to create zeros near (0,0)
+        let mut b = board_with(3, 3, 1);
+        b.mines_placed = true;
+        b.minefield[b.idx(2, 2)] = true;
+        // Revealing (0,0) should not panic and should reveal a region up to numbers at the boundary
+        assert!(b.reveal(0, 0));
+        // Ensure all non-mine cells except those adjacent to the mine are revealed
+        for y in 0..3 {
+            for x in 0..3 {
+                if (x, y) == (2, 2) { continue; }
+                assert!(matches!(b.state[b.idx(x, y)], CellState::Revealed(_)));
+            }
+        }
+        assert!(!matches!(b.state[b.idx(2, 2)], CellState::Revealed(_)));
     }
 }
 
