@@ -2,7 +2,7 @@ use rand::rng;
 use rand::seq::SliceRandom;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pjb enum CellState {
+pub enum CellState {
     Hidden,
     Revealed(u8),
     Flagged,
@@ -46,13 +46,6 @@ impl Board {
         self.state[self.idx(x, y)]
     }
 
-    /// Count how many flags are currently placed on the board.
-    pub fn flags_count(&self) -> usize {
-        self.state
-            .iter()
-            .filter(|c| matches!(c, CellState::Flagged))
-            .count()
-    }
 
     #[inline]
     fn idx(&self, x: usize, y: usize) -> usize {
@@ -207,22 +200,11 @@ impl Board {
         true
     }
 
-    /// Render helper used by placeholder app.
-    pub fn render(&self) {
-        println!("Board: {}x{}, mines {}", self.width, self.height, self.mines);
-        for y in 0..self.height {
-            for x in 0..self.width {
-                let i = self.idx(x, y);
-                let ch = match self.state[i] {
-                    CellState::Hidden => '#',
-                    CellState::Flagged => 'F',
-                    CellState::Revealed(n) => char::from(b'0' + n),
-                };
-                print!("{} ", ch);
-            }
-            println!();
-        }
+    /// Check if a coordinate contains a mine.
+    pub fn is_mine(&self, x: usize, y: usize) -> bool {
+        self.minefield[self.idx(x, y)]
     }
+
 }
 
 #[cfg(test)]

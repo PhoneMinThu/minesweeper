@@ -3,11 +3,10 @@
 mod app;
 mod board;
 mod difficulty;
-mod error;
 mod input;
 mod ui;
 
-use crate::app::{Action, AppState, Command, Status};
+use crate::app::{Action, AppState, Command};
 use crate::difficulty::Difficulty;
 use crate::input::{translate_event, Dir, InputAction};
 use crate::ui::draw_app;
@@ -17,7 +16,7 @@ use crossterm::ExecutableCommand;
 use ratatui::prelude::CrosstermBackend;
 use ratatui::Terminal;
 use std::io::{stdout, Stdout};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 fn main() {
     // 1) Initialize terminal backend and enable raw mode
@@ -72,6 +71,7 @@ fn main() {
                 width,
                 height,
                 |x, y| app.board.cell_at(x, y),
+                |x, y| app.board.is_mine(x, y),
                 cursor,
                 status,
             );

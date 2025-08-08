@@ -13,7 +13,7 @@ use ratatui::widgets::{Block, Borders, Clear, Paragraph, Wrap};
 /// - cell_at: returns the current CellState at (x, y)
 /// - cursor: optional (x, y) cursor position to highlight
 /// - status: current game status to decide on overlay text
-pub fn draw_app<FGet>(
+pub fn draw_app<FGet, FIsMine>(
     f: &mut Frame<'_>,
     mines_total: usize,
     flags: usize,
@@ -21,12 +21,14 @@ pub fn draw_app<FGet>(
     width: usize,
     height: usize,
     mut cell_at: FGet,
+    mut is_mine: FIsMine,
     cursor: Option<(usize, usize)>,
     status: Status,
 ) where
     FGet: FnMut(usize, usize) -> CellState,
+    FIsMine: FnMut(usize, usize) -> bool,
 {
-    let area = f.size();
+    let area = f.area();
 
     // Vertical layout: header (3), board (auto), footer (3)
     let layout = Layout::default()
@@ -39,7 +41,7 @@ pub fn draw_app<FGet>(
         .split(area);
 
     draw_header(f, layout[0], mines_total, flags, elapsed_secs);
-    draw_board(f, layout[1], width, height, &mut cell_at, cursor);
+    draw_board(f, layout[1], width, height, &mut cell_at, &mut is_mine, cursor, status);
     draw_footer(f, layout[2]);
 
     // Overlay for game end
@@ -92,15 +94,18 @@ pub fn draw_footer(f: &mut Frame<'_>, area: Rect) {
 }
 
 /// Draw the central game board as a grid of Unicode glyphs with colors per number.
-pub fn draw_board<FGet>(
+pub fn draw_board<FGet, FIsMine>(
     f: &mut Frame<'_>,
     area: Rect,
     width: usize,
     height: usize,
     cell_at: &mut FGet,
+    is_mine: &mut FIsMine,
     cursor: Option<(usize, usize)>,
+    status: Status,
 ) where
     FGet: FnMut(usize, usize) -> CellState,
+    FIsMine: FnMut(usize, usize) -> bool,
 {
     // Build content line by line. Each cell is 2-character wide for spacing.
     let mut lines: Vec<Line> = Vec::with_capacity(height);
@@ -108,7 +113,15 @@ pub fn draw_board<FGet>(
         let mut spans: Vec<Span> = Vec::with_capacity(width);
         for x in 0..width {
             let cell = cell_at(x, y);
-            let (symbol, style) = cell_symbol_and_style(cell);
+            // If game over/won, reveal mines regardless of cell state
+            let (symbol, style) = if matches!(status, Status::Win | Status::Lose)
+                && matches!(cell, CellState::Hidden)
+                && is_mine(x, y)
+            {
+                ("*".to_string(), Style::default().fg(Color::Red).add_modifier(Modifier::BOLD))
+            } else {
+                cell_symbol_and_style(cell)
+            };
             let mut style = style;
             if let Some((cx, cy)) = cursor {
                 if cx == x && cy == y {
