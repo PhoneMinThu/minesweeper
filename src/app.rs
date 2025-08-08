@@ -8,7 +8,8 @@ pub struct App {
 
 impl App {
     pub fn new(difficulty: Difficulty) -> Self {
-        let board = Board::new(difficulty);
+        let (w, h, m) = difficulty.parameters();
+        let board = Board::new(w, h, m);
         Self { board }
     }
 
